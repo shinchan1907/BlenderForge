@@ -291,46 +291,69 @@ def create_chronos_sculpture(output_stl_path: str, output_png_path: str, output_
     nodes = mat.node_tree.nodes
     bsdf = nodes.get("Principled BSDF")
     if bsdf:
-        bsdf.inputs['Base Color'].default_value = (0.28, 0.32, 0.40, 1.0)
-        bsdf.inputs['Metallic'].default_value = 0.85
-        bsdf.inputs['Roughness'].default_value = 0.25
+        bsdf.inputs['Base Color'].default_value = (0.35, 0.42, 0.52, 1.0)
+        bsdf.inputs['Metallic'].default_value = 0.90
+        bsdf.inputs['Roughness'].default_value = 0.22
     obj.data.materials.append(mat)
 
     # ----------------------------------------------------
-    # 8. Studio Camera & Lighting Setup for Render
+    # 8. Studio World, Lighting & Camera Setup for Render
     # ----------------------------------------------------
-    # Camera
+    # Studio World Environment
+    world = bpy.data.worlds.new("StudioWorld")
+    world.use_nodes = True
+    scene.world = world
+    bg = world.node_tree.nodes.get("Background")
+    if bg:
+        bg.inputs["Color"].default_value = (0.12, 0.13, 0.16, 1.0)
+        bg.inputs["Strength"].default_value = 1.0
+
+    # Camera Target Empty at centroid (0, 0, 32)
+    target_empty = bpy.data.objects.new("CameraTarget", None)
+    target_empty.location = (0.0, 0.0, 32.0)
+    scene.collection.objects.link(target_empty)
+
+    # Camera with Track-To constraint
     cam_data = bpy.data.cameras.new("StudioCamera")
+    cam_data.lens = 55.0
     cam_obj = bpy.data.objects.new("StudioCamera", cam_data)
     scene.collection.objects.link(cam_obj)
     scene.camera = cam_obj
-    cam_obj.location = (110.0, -110.0, 95.0)
-    cam_obj.rotation_euler = (math.radians(65.0), 0.0, math.radians(45.0))
+    cam_obj.location = (85.0, -85.0, 65.0)
 
-    # Three-Point Key & Fill Lighting
-    key_light_data = bpy.data.lights.new(name="KeyLight", type='AREA')
-    key_light_data.energy = 800.0
-    key_light_data.size = 50.0
-    key_light = bpy.data.objects.new("KeyLight", key_light_data)
+    track = cam_obj.constraints.new(type='TRACK_TO')
+    track.target = target_empty
+    track.track_axis = 'TRACK_NEGATIVE_Z'
+    track.up_axis = 'UP_Y'
+
+    # Three-Point Directional Studio Lighting Rig
+    # Key Light (Warm Sun)
+    key_light_data = bpy.data.lights.new(name="KeySun", type='SUN')
+    key_light_data.energy = 4.5
+    key_light_data.color = (1.0, 0.96, 0.90)
+    key_light = bpy.data.objects.new("KeySun", key_light_data)
     scene.collection.objects.link(key_light)
-    key_light.location = (80.0, -60.0, 120.0)
+    key_light.rotation_euler = (math.radians(45.0), math.radians(20.0), math.radians(50.0))
 
-    fill_light_data = bpy.data.lights.new(name="FillLight", type='AREA')
-    fill_light_data.energy = 300.0
-    fill_light_data.size = 70.0
-    fill_light = bpy.data.objects.new("FillLight", fill_light_data)
+    # Fill Light (Cool Sun)
+    fill_light_data = bpy.data.lights.new(name="FillSun", type='SUN')
+    fill_light_data.energy = 2.0
+    fill_light_data.color = (0.75, 0.85, 1.0)
+    fill_light = bpy.data.objects.new("FillSun", fill_light_data)
     scene.collection.objects.link(fill_light)
-    fill_light.location = (-70.0, -90.0, 60.0)
+    fill_light.rotation_euler = (math.radians(-30.0), math.radians(-40.0), math.radians(160.0))
 
-    rim_light_data = bpy.data.lights.new(name="RimLight", type='POINT')
-    rim_light_data.energy = 600.0
-    rim_light = bpy.data.objects.new("RimLight", rim_light_data)
+    # Rim / Accent Light (Warm Rim Sun)
+    rim_light_data = bpy.data.lights.new(name="RimSun", type='SUN')
+    rim_light_data.energy = 3.5
+    rim_light_data.color = (1.0, 0.82, 0.65)
+    rim_light = bpy.data.objects.new("RimSun", rim_light_data)
     scene.collection.objects.link(rim_light)
-    rim_light.location = (-60.0, 80.0, 100.0)
+    rim_light.rotation_euler = (math.radians(70.0), math.radians(-60.0), math.radians(-120.0))
 
     # Render settings
-    scene.render.resolution_x = 1080
-    scene.render.resolution_y = 1080
+    scene.render.resolution_x = 1200
+    scene.render.resolution_y = 1200
     scene.render.filepath = str(output_png_path)
 
     # ----------------------------------------------------
