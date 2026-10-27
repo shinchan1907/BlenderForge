@@ -1,0 +1,23 @@
+id: "cube_strategy_comparison"
+objective: "Evaluate direct bmesh construction versus bpy.ops mesh operator"
+timeout_sec: 30.0
+cleanup_policy: "always"
+strategies:
+  - name: "Direct BMesh"
+    description: "Constructs cube geometry directly in memory via bmesh"
+    script_content: |
+      import bpy
+      import bmesh
+      mesh = bpy.data.meshes.new("BMeshCube")
+      bm = bmesh.new()
+      bmesh.ops.create_cube(bm, size=2.0)
+      bm.to_mesh(mesh)
+      bm.free()
+      obj = bpy.data.objects.new("BMeshCube", mesh)
+      bpy.context.scene.collection.objects.link(obj)
+
+  - name: "Primitive Operator"
+    description: "Constructs cube geometry using high-level bpy.ops operator"
+    script_content: |
+      import bpy
+      bpy.ops.mesh.primitive_cube_add(size=2.0)
