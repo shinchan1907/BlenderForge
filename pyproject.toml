@@ -1,0 +1,26 @@
+[project]
+name = "blenderforge"
+version = "0.1.0"
+description = "Local-first research and production system for Blender capability discovery, MCP adaptation, safe experimentation, and verified skill synthesis."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.1.0",
+    "mcp>=2.3.0",
+    "pydantic>=2.7.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pyyaml>=6.0.0",
+    "rich>=13.7.0",
+]
+
+[project.scripts]
+blenderforge = "blenderforge.cli:cli"
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
